@@ -1,0 +1,67 @@
+
+
+body {
+  background-color: #EEE;
+  font-family: "Poppins", sans-serif;
+  font-optical-sizing: auto;
+}
+
+/* nav styles */
+nav {
+  @apply pb-4
+    border-b-2 border-gray-200
+    flex items-center gap-5 
+    my-10 mx-auto 
+    max-w-7xl;
+}
+
+main {
+  @apply pb-4
+    my-10 mx-auto px-6
+    max-w-7xl;
+}
+
+
+.ant-table-thead > tr > th {
+  background-color: #fcfdfd !important;
+  color: #061523 !important;
+  font-weight: normal !important;
+  text-transform: uppercase;
+  font-size: 14px !important;
+  text-align: center;
+}
+
+/* App.css */
+
+/* Apply a light blue shade to even rows */
+.ant-table-tbody > tr:nth-child(even) {
+  background-color: #ffffff !important;
+}
+
+/* Apply a slightly darker blue shade to odd rows */
+.ant-table-tbody > tr:nth-child(odd) {
+  background-color: #f7f7f7 !important; 
+}
+
+/* Apply styles to <td> elements in fixed-left columns for alternating rows */
+.ant-table-tbody > tr:nth-child(even) .ant-table-cell-fix-left {
+  background-color: #ffffff !important; /* Light grey */
+}
+
+.ant-table-tbody > tr:nth-child(odd) .ant-table-cell-fix-left {
+  background-color: #f7f7f7 !important; /* Darker grey */
+}
+/* .ant-table-column-sorter {
+  display: none;
+} */
+.ant-table-tbody .ant-table-column-sort{
+  background-color: unset !important;
+}
+
+/* Optional: Reset any default styles applied by Ant Design to the sorted column */
+.ant-table-column-sorter-up,
+.ant-table-column-sorter-down {
+  background: none !important;
+  /* border: none !important; */
+  /* color: inherit !important; */
+}
