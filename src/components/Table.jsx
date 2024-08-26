@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useState, useEffect, useRef } from "react";
-import { Table } from "antd";
+import { Table, DatePicker, Button } from "antd";
 import { parseISO, format } from "date-fns";
 
 import caret from "../assets/caret.svg";
@@ -39,6 +39,7 @@ const CustomSelect = ({
 
 export default function BlaiizTable() {
   const searchref = useRef();
+  const { RangePicker } = DatePicker;
 
   const [text, setText] = useState("");
   const [showSelect, setShowSelect] = useState(false);
@@ -159,7 +160,6 @@ export default function BlaiizTable() {
         
         return month === value;
       },
-
       render: (_, { dob }) => `${format(parseISO(dob.date), "do MMMM, yyyy")}`,
     },
     {
@@ -184,6 +184,39 @@ export default function BlaiizTable() {
         return false;
       },
       render: (_, { dob }) => `${dob.age}`,
+    },
+    {
+      title: "Date Created",
+      dataIndex: "date_created",
+      key: "date_created",
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <RangePicker
+            value={selectedKeys[0]}
+            onChange={(dates) => setSelectedKeys(dates ? [dates] : [])}
+            style={{ marginBottom: 10, display: "flex" }}
+          />
+          <Button
+            type="primary"
+            onClick={() => confirm()}
+            style={{ marginRight: 8 }}
+          >
+            Apply
+          </Button>
+          <Button type="default" onClick={() => clearFilters()}>Reset</Button>
+        </div>
+      ),
+      onFilter: (value, record) => {
+        if (!value) return true;
+        const [start, end] = value;
+        const date = parseISO(record.registered.date);
+        if (start && end) {
+          return date >= start.startOf("day") && date <= end.endOf("day");
+        }
+        return true;
+      },
+      render: (_, { registered }) =>
+        `${format(parseISO(registered.date), "dd/MM/yyyy")}`,
     },
   ];
 
