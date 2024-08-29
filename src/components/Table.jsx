@@ -150,22 +150,22 @@ export default function BlaiizTable() {
       dataIndex: "age",
       key: "age",
       sorter: (a, b) => a.dob.age - b.dob.age,
-      filters: [
-        { text: "Under 20", value: "Under 20" },
-        { text: "20-29", value: "20-29" },
-        { text: "30-39", value: "30-39" },
-        { text: "40-49", value: "40-49" },
-        { text: "50 and above", value: "50 and above" },
-      ],
-      onFilter: (value, record) => {
-        const age = record.dob.age;
-        if (value === "Under 20") return age < 20;
-        if (value === "20-29") return age >= 20 && age <= 29;
-        if (value === "30-39") return age >= 30 && age <= 39;
-        if (value === "40-49") return age >= 40 && age <= 49;
-        if (value === "50 and above") return age >= 50;
-        return false;
-      },
+      // filters: [
+      //   { text: "Under 20", value: "Under 20" },
+      //   { text: "20-29", value: "20-29" },
+      //   { text: "30-39", value: "30-39" },
+      //   { text: "40-49", value: "40-49" },
+      //   { text: "50 and above", value: "50 and above" },
+      // ],
+      // onFilter: (value, record) => {
+      //   const age = record.dob.age;
+      //   if (value === "Under 20") return age < 20;
+      //   if (value === "20-29") return age >= 20 && age <= 29;
+      //   if (value === "30-39") return age >= 30 && age <= 39;
+      //   if (value === "40-49") return age >= 40 && age <= 49;
+      //   if (value === "50 and above") return age >= 50;
+      //   return false;
+      // },
       render: (_, { dob }) => `${dob.age}`,
     },
     {
