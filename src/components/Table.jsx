@@ -196,8 +196,8 @@ export default function BlaiizTable() {
           </Button>
         </div>
       ),
-      render: (_, { registered }) =>
-        `${format(parseISO(registered.date), "dd/MM/yyyy")}`,
+      render: (_, { createdAt }) =>
+        `${format(parseISO(createdAt), "dd/MM/yyyy")}`,
     },
   ];
 
