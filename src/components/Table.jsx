@@ -2,78 +2,58 @@ import axios from "axios";
 import { useState, useEffect, useRef } from "react";
 import { Table, DatePicker, Button } from "antd";
 import { parseISO, format } from "date-fns";
+import dayjs from "dayjs";
 
-import caret from "../assets/caret.svg";
-
-const CustomSelect = ({
-  options,
-  searchParameter,
-  setSearchParameter,
-  setShowSelect,
-  setText,
-}) => {
-  return (
-    <div>
-      {options.map((option, idx) => (
-        <p
-          key={option.value}
-          className={`p-2 cursor-pointer ${
-            idx === 0
-              ? "bg-[#f4f4f4] text-[#c1c2c2]"
-              : searchParameter === option.value
-              ? "bg-[#F0F5FF] text-[#1D39C4]"
-              : "text-[#1F2937]"
-          } rounded`}
-          onClick={() => {
-            setSearchParameter(option.value);
-            setShowSelect(false);
-            setText("");
-          }}
-        >
-          {option.label}
-        </p>
-      ))}
-    </div>
-  );
-};
+import useDebounce from "../hooks/useDebounce";
 
 export default function BlaiizTable() {
   const searchref = useRef();
   const { RangePicker } = DatePicker;
 
   const [text, setText] = useState("");
-  const [showSelect, setShowSelect] = useState(false);
-  const [searchParameter, setSearchParameter] = useState("<select option>");
+
+  const [totalCount, setTotalCount] = useState(null);
+
+  const [filterObject, setFilterObject] = useState({ page: "0", count: "10" });
 
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 10,
-    pageSizeOptions: ["10", "20", "30", "40"],
-    showSizeChanger: true,
-  });
 
-  const search_options = [
-    { value: "<select option>", label: "<select option>" },
-    { value: "name", label: "Name" },
-    { value: "email", label: "Email" },
-    { value: "location", label: "Location" },
-  ];
+  const searchDebounce = useDebounce();
+
+  const [page, setPage] = useState(parseInt(filterObject.page));
+
+  const handleSearch = (e) => {
+    setText(e.target.value);
+    searchDebounce(() => {
+      setFilterObject({
+        ...filterObject,
+        ...{ page: "0", search: e.target.value },
+      });
+    });
+  };
+
+  useEffect(() => {
+    setPage(parseInt(filterObject.page));
+  }, [filterObject]);
 
   useEffect(() => {
     setLoading(true);
+    const filter_string = new URLSearchParams(filterObject).toString();
     axios
-      .get("https://randomuser.me/api/?results=65&seed=abc&nat=us,ca,ua,fi,gb")
+      .get(
+        `https://free-user-api.onrender.com/api/user/get_all_users?${filter_string}`
+      )
       .then((response) => {
-        setUserData(response.data.results);
+        setTotalCount(response.data.results?.[0]?.total_users);
+        setUserData(response.data.results?.[0]?.users);
         setLoading(false);
       })
       .catch((error) => {
         setLoading(false);
         console.error("Error fetching data:", error);
       });
-  }, []);
+  }, [filterObject]);
 
   const columns = [
     {
@@ -86,8 +66,9 @@ export default function BlaiizTable() {
         { text: "Mrs", value: "Mrs" },
         { text: "Miss", value: "Miss" },
       ],
-      onFilter: (value, record) => record.name.title === value,
-      render: (_, { name }) => `${name?.title}`,
+      render: (_, { name }) => (
+        <span className="capitalize">{name?.title}</span>
+      ),
     },
     {
       title: "Name",
@@ -98,7 +79,12 @@ export default function BlaiizTable() {
         const nameB = `${b.name.first} ${b.name.last}`.toUpperCase();
         return nameA.localeCompare(nameB);
       },
-      render: (_, { name }) => `${name.first} ${name.last}`,
+      render: (_, { name }) => (
+        <>
+          <span className="capitalize">{name.first} </span>
+          <span className="capitalize">{name.last}</span>
+        </>
+      ),
     },
     {
       title: "Email",
@@ -114,7 +100,6 @@ export default function BlaiizTable() {
         { text: "Male", value: "male" },
         { text: "Female", value: "female" },
       ],
-      onFilter: (value, record) => record.gender === value,
       render: (gender) => <span className="capitalize">{gender}</span>,
     },
     {
@@ -128,8 +113,12 @@ export default function BlaiizTable() {
         { text: "Finland", value: "Finland" },
         { text: "United Kingdom", value: "United Kingdom" },
       ],
-      onFilter: (value, record) => record.location.country === value,
-      render: (location) => `${location.city}, ${location.country}`,
+      render: (location) => (
+        <>
+          <span className="capitalize">{location.city}, </span>
+          <span className="capitalize">{location.country}</span>
+        </>
+      ),
     },
     {
       title: "Phone",
@@ -154,12 +143,6 @@ export default function BlaiizTable() {
         { text: "November", value: "November" },
         { text: "December", value: "December" },
       ],
-      onFilter: (value, record) => {
-        const dobDate = record.dob.date;
-        const month = format(parseISO(dobDate), "MMMM");
-        
-        return month === value;
-      },
       render: (_, { dob }) => `${format(parseISO(dob.date), "do MMMM, yyyy")}`,
     },
     {
@@ -189,7 +172,12 @@ export default function BlaiizTable() {
       title: "Date Created",
       dataIndex: "date_created",
       key: "date_created",
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => (
         <div style={{ padding: 8 }}>
           <RangePicker
             value={selectedKeys[0]}
@@ -203,118 +191,96 @@ export default function BlaiizTable() {
           >
             Apply
           </Button>
-          <Button type="default" onClick={() => clearFilters()}>Reset</Button>
+          <Button type="default" onClick={() => clearFilters()}>
+            Reset
+          </Button>
         </div>
       ),
-      onFilter: (value, record) => {
-        if (!value) return true;
-        const [start, end] = value;
-        const date = parseISO(record.registered.date);
-        if (start && end) {
-          return date >= start.startOf("day") && date <= end.endOf("day");
-        }
-        return true;
-      },
       render: (_, { registered }) =>
         `${format(parseISO(registered.date), "dd/MM/yyyy")}`,
     },
   ];
 
-  const handleTableChange = (newPagination) => {
-    setLoading(true);
-    setPagination({
-      ...pagination,
-      current: newPagination.current,
-      pageSize: newPagination.pageSize,
-    });
-    setTimeout(() => {
-      setLoading(false);
-    }, 300);
+  // handlepagechange
+  const handlePageChange = (page) => {
+    setFilterObject({ ...filterObject, ...{ page: String(page - 1) } });
   };
 
-  const filteredData = userData?.filter((item) => {
-    if (searchParameter === "<select option>") {
-      return userData;
-    }
-    if (searchParameter === "name") {
-      return `${item.name.first} ${item.name.last}`
-        .toLowerCase()
-        .includes(text.toLowerCase());
-    }
-    if (searchParameter === "email") {
-      return `${item.email}`.toLowerCase()?.includes(text.toLowerCase());
-    }
-    if (searchParameter === "location") {
-      return `${item.location.city}, ${item.location.country}`
-        .toLowerCase()
-        .includes(text.toLowerCase());
-    }
-  });
-
-  //creating the click outside to close drop down effect
-  useEffect(() => {
-    const checkIfClickedOutside = (e) => {
-      // If the menu is open and the clicked target is not within the menu, then close the menu
-      if (
-        setShowSelect &&
-        searchref.current &&
-        !searchref.current.contains(e.target)
-      ) {
-        setShowSelect(false);
-      }
-    };
-    document.addEventListener("mousedown", checkIfClickedOutside);
-    return () => {
-      // Cleanup the event listener
-      document.removeEventListener("mousedown", checkIfClickedOutside);
-    };
-  }, [setShowSelect]);
+  // handle per rows change
+  const handlePerRowsChange = async (newPerPage, page) => {
+    setFilterObject((prev) => ({
+      ...prev,
+      page: String(page),
+      count: String(newPerPage),
+    }));
+  };
 
   return (
     <>
       <div className="mb-5 flex gap-x-2 justify-end">
-        <div className="relative" ref={searchref}>
-          <div
-            className="flex items-center gap-x-2 px-4 py-1.5 border-solid border-[1px] bg-white border-[#9CA3AF] rounded w-fit cursor-pointer"
-            onClick={() => setShowSelect(!showSelect)}
-          >
-            <p className="text-sm text-[#36454F] capitalize">
-              {searchParameter}
-            </p>
-            <span>
-              <img src={caret} alt="" />
-            </span>
-          </div>
-          {showSelect && (
-            <div className="absolute w-[160px] p-1 text-sm black-text-3 bg-white shadow-[1px_4px_12px_-1px_rgba(44,78,39,0.15)] rounded z-10">
-              {showSelect && (
-                <CustomSelect
-                  options={search_options}
-                  searchParameter={searchParameter}
-                  setSearchParameter={setSearchParameter}
-                  setShowSelect={setShowSelect}
-                  setText={setText}
-                />
-              )}
-            </div>
-          )}
-        </div>
+        <div className="relative" ref={searchref}></div>
         <input
           type="text"
           value={text}
-          disabled={searchParameter === "<select option>" ? true : false}
-          onChange={(e) => setText(e.target.value)}
+          disabled={false}
+          onChange={handleSearch}
           className="bg-white w-60 p-1 border-[1px] border-[#9CA3AF] rounded outline-none text-sm placeholder:text-sm text-[#36454F] disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-          placeholder={`Search by ${searchParameter}`}
+          placeholder={`Search by name, email, location`}
         />
       </div>
       <Table
         columns={columns}
-        rowKey={(record) => record.login.uuid}
-        dataSource={filteredData}
-        pagination={pagination}
+        rowKey={(record) => record._id}
+        dataSource={userData}
+        pagination={{
+          defaultPageSize: 10,
+          total: totalCount,
+          showTotal: (total, range) =>
+            `${range[0]}-${range[1]} of ${total} items`,
+          current: page + 1,
+          showSizeChanger: true,
+          pageSizeOptions: ["10", "15", "20", "30"],
+          onChange: (page, pageSize) => {
+            handlePageChange(page - 1);
+            handlePerRowsChange(pageSize, page - 1);
+          },
+        }}
         loading={loading}
-        onChange={handleTableChange}
+        onChange={(pagination, filters, sorter) => {
+          const selectedDateRange = filters?.date_created?.[0];
+          const startDate =
+            filters?.date_created?.length > 0
+              ? dayjs(selectedDateRange?.[0]).format("YYYY-MM-DD")
+              : "";
+          const endDate =
+            filters?.date_created?.length > 0
+              ? dayjs(selectedDateRange?.[1]).format("YYYY-MM-DD")
+              : "";
+
+          const sortOrderMap = {
+            ascend: "ascending",
+            descend: "descending",
+          };
+
+          const age_sort =
+            sorter?.field === "age" ? sortOrderMap[sorter?.order] || "" : "";
+
+          const name_sort =
+            sorter?.field === "name" ? sortOrderMap[sorter?.order] || "" : "";
+
+          setFilterObject((prev) => ({
+            ...prev,
+            title: (filters?.title || [])?.join(","),
+            gender: (filters?.gender || [])?.join(","),
+            location: (filters?.location || [])?.join(","),
+            dob: (filters?.dob || [])?.join(","),
+            age: (filters?.age || [])?.join(","),
+            start_date: startDate,
+            end_date: endDate,
+            age_sort: age_sort,
+            name_sort: name_sort,
+          }));
+        }}
         scroll={{ x: "1100px" }}
       />
     </>
