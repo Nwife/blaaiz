@@ -228,7 +228,7 @@ export default function BlaiizTable() {
 
   return (
     <>
-      <div className="mb-5 flex gap-x-2 justify-end relative w-max ml-auto" ref={filterRef}>
+      <div className="mb-5 flex gap-x-2 justify-end relative w-max ml-auto">
         <div className="flex items-start gap-x-1">
           {isActive && <div className="h-2 w-2 rounded-full bg-blue-500" />}
           <div
